@@ -13,6 +13,7 @@ from chainer import optimizers
 from chainer import serializers
 from chainer.functions.loss.mean_squared_error import mean_squared_error
 import net
+import cv2
 
 parser = argparse.ArgumentParser(
 description='PredNet')
@@ -30,8 +31,6 @@ parser.add_argument('--size', '-s', default='160,120',
                     help='Size of target images. width,height (pixels)')
 parser.add_argument('--channels', '-c', default='1,16,32,64',
                     help='Number of channels on each layers')
-parser.add_argument('--offset', '-o', default='0,0',
-                    help='Center offset of clipping input image (pixels)')
 parser.add_argument('--input_len', '-l', default=50, type=int,
                     help='Input frame length fo extended prediction on test (frames)')
 parser.add_argument('--ext', '-e', default=10, type=int,
@@ -100,12 +99,8 @@ def load_list(path, root):
     return tuples
 
 def read_image(path):
-    image = np.asarray(Image.open(path)).transpose(2, 0, 1)
-    top = args.offset[1] + (image.shape[1]  - args.size[1]) / 2
-    left = args.offset[0] + (image.shape[2]  - args.size[0]) / 2
-    bottom = args.size[1] + top
-    right = args.size[0] + left
-    image = image[:, top:bottom, left:right].astype(np.float32)
+    image = np.asarray(Image.open(path)).transpose(0, 1)
+    image = image.astype(np.float32)
     image /= 255
     return image
 
@@ -113,8 +108,7 @@ def write_image(image, path):
     image *= 255
     image = image.transpose(1, 2, 0)
     image = image.astype(np.uint8)
-    result = Image.fromarray(image)
-    result.save(path)
+    cv2.imwrite(path,image)
 
 if args.images:
     sequencelist = [args.images]
